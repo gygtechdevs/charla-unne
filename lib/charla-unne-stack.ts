@@ -1,5 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 
 export class CharlaUnneStack extends cdk.Stack {
@@ -48,6 +50,22 @@ export class CharlaUnneStack extends cdk.Stack {
       "printf '%s\\n' '<h1>Servidor HTTP UNNE</h1>' > /var/www/html/index.html",
     );
 
+    // Created outside CDK (manually); imported by name so it is not re-created.
+    const deployer = iam.User.fromUserName(
+      this,
+      "DeployerUser",
+      "charla-unne-deployer",
+    );
+    const deployerCredentials = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      "DeployerCredentials",
+      "charla-unne/deployer-credentials",
+    );
+
+    new cdk.CfnOutput(this, "DeployerUserName", { value: deployer.userName });
+    new cdk.CfnOutput(this, "CredentialsSecretName", {
+      value: deployerCredentials.secretName,
+    });
     new cdk.CfnOutput(this, "WebServerPublicIp", {
       value: webServer.instancePublicIp,
     });
